@@ -59,7 +59,6 @@ class FQueue:
 
     def push(self, entry):
         # Pushes an entry to the queue and returns the length of the queue and the path of the pushed entry.
-        n = self.push_n
         entry_dst_path = self.make_path(self.push_n)
         self.write(entry, entry_dst_path)
         return self.length

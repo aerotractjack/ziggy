@@ -21,40 +21,59 @@ Usage example: submitting multiple files
 
 url = "http://127.0.0.1:5000/submit"
 
-def read_yaml(path):
-    with open(path, 'r') as yaml_file:
-        return yaml.safe_load(yaml_file)
+class ZiggyClient:
 
-def read_json(path):
-    with open(path, 'r') as json_file:
-        return json.loads(json_file.read())
+    def __init__(self, submit_url=url):
+        self.submit_url = url
 
-def ziggy_submit_from_dict(data):
-    resp = requests.post(url, json=data)
-    return resp
+    def read_yaml(self, path):
+        with open(path, 'r') as yaml_file:
+            return yaml.safe_load(yaml_file)
 
-def ziggy_submit_from_path(path):
-    path = Path(path)
-    fn = read_yaml
-    if path.suffix == ".json":
-        fn = read_json
-    contents = fn(path)
-    return ziggy_submit_from_dict(contents)
+    def read_json(self, path):
+        with open(path, 'r') as json_file:
+            return json.loads(json_file.read())
+
+    def ziggy_submit_from_dict(self, data):
+        resp = requests.post(self.submit_url, json=data)
+        return resp
+
+    def ziggy_submit_from_path(self, path):
+        fn = self.read_yaml
+        if path.suffix == ".json":
+            fn = self.read_json
+        contents = fn(path)
+        return self.ziggy_submit_from_dict(contents)
+
+    def submit(self, data_or_path):
+        if not isinstance(data_or_path, list):
+            data_or_path = [data_or_path]
+        for dop in data_or_path:
+            if isinstance(dop, dict):
+                self.ziggy_submit_from_dict(dop)
+            else:
+                dop = Path(dop).absolute()
+                if dop.is_file():
+                    self.ziggy_submit_from_path(dop)
+                    continue
+                for f in dop.iterdir():
+                    self.ziggy_submit_from_path(f)
+
+    @classmethod
+    def Submit(cls, config):
+        obj = cls()
+        obj.submit(config)
 
 if __name__ == "__main__":
     import sys
     from pathlib import Path
-    if len(sys.argv) == 1 or sys.argv[1] == "-h" or sys.argv[1] == "help":
-        print("\nUSAGE:\n$ python3 submit_job.py /path/to/config/file/or/dir[.json|.yaml]")
-        sys.exit(1)
-    for i in range(1, len(sys.argv)):
-        p = Path(sys.argv[i])
-        p = p.absolute()
-        if not p.exists():
-            raise ValueError("submission file does not exist")
-        if p.is_dir():
-            for f in p.iterdir():
-                print(ziggy_submit_from_path(f.as_posix()))
-        elif p.is_file():
-            print(ziggy_submit_from_path(p.as_posix()))
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", required=True, type=str, nargs="+",
+        help="Path(s) to job config file(s) to submit, or path(s) to directory(s) containing files")
+    args = parser.parse_args()
+
+    ZiggyClient.Submit(args.config)
+
     sys.exit(0)

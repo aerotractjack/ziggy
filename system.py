@@ -3,6 +3,7 @@ from runner.job import ZiggyJobRegistry
 from runner.manager import ZiggyGPUManager
 from util.multiqueue import NamedMultiQueue
 from dask.distributed import Client
+from datetime import datetime
 
 ''' 
 This is the main entrypopint to kicking off the job polling/execution system
@@ -28,6 +29,8 @@ if __name__ == "__main__":
 
     # Load any previously failed jobs into the queue
     poller.push_inprocess_queue(mngr.inprocess_q)
+
+    print("Ziggy starting up @ ", str(datetime.now()))
 
     # Wait for new jobs and submit them as they come, forever
     for foo in poller.poll_forever():

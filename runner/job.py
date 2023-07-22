@@ -28,8 +28,8 @@ class Job:
         # of this class. Used to submit jobs to dask
         return cls(device, config).run
 
-@RegisterJob("example_pipeline")
-class ExamplePipelineJob(Job):
+@RegisterJob("test_pipeline")
+class TestPipeline(Job):
     ''' This is a proof of concept pipeline to show we can use Ziggy to execute python code
     within our dev environment, input a config file, import necessary libraries, and record output '''
 
@@ -39,7 +39,8 @@ class ExamplePipelineJob(Job):
         self.src_code_path = "/home/aerotract/software/ziggy_pipelines/test_pipeline/test_pipeline.py"
 
     def run(self):
-        cmd = [self.python, self.src_code_path, json.dumps(self.config)]
+        dvc = "CUDA_VISIBLE_DEVICES=" + self.device[-1]
+        cmd = [dvc, self.python, self.src_code_path, json.dumps(self.config)]
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         return [result.stdout, result.stderr]
 
