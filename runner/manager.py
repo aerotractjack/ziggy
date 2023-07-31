@@ -1,4 +1,3 @@
-from util.multiqueue import NamedMultiQueue
 
 class ZiggyGPUManager:
     ''' `ZiggyGPUManager` is responsible for managing our system, ensuring:
